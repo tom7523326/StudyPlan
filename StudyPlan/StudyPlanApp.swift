@@ -42,10 +42,10 @@ class TaskStore: ObservableObject {
                 allTasks.append(Task(
                     name: tpl.0,
                     category: tpl.1,
-                    expectedMinutes: tpl.2,
-                    actualMinutes: 0,
+                    expectedDuration: tpl.2,
+                    actualDuration: 0,
                     date: date,
-                    status: .notStarted
+                    status: .pending
                 ))
             }
             date = calendar.date(byAdding: .day, value: 1, to: date)!
@@ -72,24 +72,81 @@ class TaskStore: ObservableObject {
                 for (i, task) in tasks.enumerated() {
                     if let match = saved.first(where: { $0.id == task.id }) {
                         tasks[i].status = match.status
-                        tasks[i].actualMinutes = match.actualMinutes
+                        tasks[i].actualDuration = match.actualDuration
+                        tasks[i].startTime = match.startTime
+                        tasks[i].endTime = match.endTime
                     }
                 }
             }
         }
     }
-    // 后续可添加保存、更新等方法
+    
+    // 更新任务
+    func updateTask(_ updatedTask: Task) {
+        if let index = tasks.firstIndex(where: { $0.id == updatedTask.id }) {
+            tasks[index] = updatedTask
+        }
+    }
+    
+    // 删除任务
+    func deleteTask(_ task: Task) {
+        tasks.removeAll { $0.id == task.id }
+    }
+    
+    // 添加新任务
+    func addTask(_ task: Task) {
+        tasks.append(task)
+    }
+    
+    // 导入任务
+    func importTasks(_ importedTasks: [Task]) {
+        // 合并导入的任务，避免重复
+        for importedTask in importedTasks {
+            if !tasks.contains(where: { $0.id == importedTask.id }) {
+                tasks.append(importedTask)
+            } else {
+                // 如果任务已存在，更新它
+                updateTask(importedTask)
+            }
+        }
+    }
+    
+    // 清除所有任务
+    func clearAllTasks() {
+        tasks.removeAll()
+    }
+    
+    // 获取指定日期的任务
+    func tasks(for date: Date) -> [Task] {
+        return tasks.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
+    }
+    
+    // 获取已完成的任务
+    func completedTasks() -> [Task] {
+        return tasks.filter { $0.status == .completed }
+    }
+    
+    // 获取进行中的任务
+    func inProgressTasks() -> [Task] {
+        return tasks.filter { $0.status == .inProgress }
+    }
 }
 
 @main
 struct StudyPlanApp: App {
     @StateObject var taskStore = TaskStore()
     @StateObject var appSettings = AppSettings()
+    
     var body: some Scene {
         WindowGroup {
             MainTabView()
                 .environmentObject(taskStore)
                 .environmentObject(appSettings)
+                .onAppear {
+                    // 设置通知
+                    NotificationManager.shared.requestPermission()
+                    NotificationManager.shared.setupNotificationCategories()
+                }
         }
     }
 }

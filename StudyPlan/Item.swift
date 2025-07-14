@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import SwiftUI
 
 @Model
 final class Item {
@@ -24,34 +25,86 @@ enum TaskCategory: String, Codable, CaseIterable, Identifiable {
     case piano = "钢琴"
     
     var id: String { self.rawValue }
+    
+    var displayName: String {
+        return self.rawValue
+    }
+    
+    var iconName: String {
+        switch self {
+        case .chinese:
+            return "book.fill"
+        case .math:
+            return "function"
+        case .english:
+            return "globe"
+        case .piano:
+            return "pianokeys"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .chinese:
+            return .blue
+        case .math:
+            return .green
+        case .english:
+            return .orange
+        case .piano:
+            return .purple
+        }
+    }
 }
 
 enum TaskStatus: String, Codable, CaseIterable, Identifiable {
-    case notStarted = "未开始"
+    case pending = "待开始"
     case inProgress = "进行中"
     case completed = "已完成"
+    case overdue = "已超时"
     
     var id: String { self.rawValue }
+    
+    var displayName: String {
+        return self.rawValue
+    }
+    
+    var iconName: String {
+        switch self {
+        case .pending:
+            return "clock"
+        case .inProgress:
+            return "play.circle"
+        case .completed:
+            return "checkmark.circle"
+        case .overdue:
+            return "exclamationmark.triangle"
+        }
+    }
 }
 
 struct Task: Identifiable, Codable {
     let id: UUID
     var name: String
     var category: TaskCategory
-    var expectedMinutes: Int
-    var actualMinutes: Int
+    var expectedDuration: Int
+    var actualDuration: Int
     var date: Date
     var status: TaskStatus
+    var startTime: Date?
+    var endTime: Date?
     var note: String?
     
-    init(id: UUID = UUID(), name: String, category: TaskCategory, expectedMinutes: Int, actualMinutes: Int = 0, date: Date, status: TaskStatus = .notStarted, note: String? = nil) {
+    init(id: UUID = UUID(), name: String, category: TaskCategory, expectedDuration: Int, actualDuration: Int = 0, date: Date, status: TaskStatus = .pending, startTime: Date? = nil, endTime: Date? = nil, note: String? = nil) {
         self.id = id
         self.name = name
         self.category = category
-        self.expectedMinutes = expectedMinutes
-        self.actualMinutes = actualMinutes
+        self.expectedDuration = expectedDuration
+        self.actualDuration = actualDuration
         self.date = date
         self.status = status
+        self.startTime = startTime
+        self.endTime = endTime
         self.note = note
     }
 }
